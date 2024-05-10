@@ -1,0 +1,186 @@
+1. Temporizador de resposta:
+O temporizador é definido como uma função simples que imprime uma mensagem quando o tempo se esgota. Esta função é chamada por uma threading.Timer sempre que uma pergunta é apresentada ao jogador.
+
+# Função para definir o temporizador
+def temporizador():
+    print("\nTempo esgotado!")
+
+
+2. Pistas ou dicas:
+As pistas ou dicas são mostradas diretamente no momento em que cada pergunta é exibida. Por exemplo:
+
+print(f"Dica: {pista}")
+
+
+
+3. Modo multiplayer:
+A implementação do modo multiplayer envolve solicitar o número de jogadores, seus nomes e, em seguida, permitir que cada jogador responda às perguntas. No final, as pontuações de cada jogador são comparadas e exibidas.
+
+# Função para o modo multiplayer
+def modo_multiplayer():
+    print("Bem-vindo ao modo multiplayer!")
+    num_jogadores = int(input("Quantos jogadores participarão? "))
+    jogadores = []
+
+    for i in range(num_jogadores):
+        nome = input(f"Digite o nome do jogador {i + 1}: ")
+        jogadores.append({"nome": nome, "pontuacao": 0})
+
+    print("\nVamos começar...\n")
+
+    nivel_dificuldade = input("Escolha o nível de dificuldade: (facil / medio / dificil): ").strip().lower()
+
+    if nivel_dificuldade not in banco_de_perguntas.keys():
+        print("Nível de dificuldade inválido. Por favor, escolha entre 'facil', 'medio' ou 'dificil'.")
+        return
+
+    print("\nEscolha a categoria:")
+    categorias_disponiveis = list(banco_de_perguntas[nivel_dificuldade].keys())
+    for i, categoria in enumerate(categorias_disponiveis, start=1):
+        print(f"{i}. {categoria.capitalize()}")
+
+    categoria_escolhida = int(input("Opção: ")) - 1
+
+    if categoria_escolhida not in range(len(categorias_disponiveis)):
+        print("Categoria inválida.")
+        return
+
+    print("\nVamos começar...\n")
+    perguntas_selecionadas = []
+
+    for tipo_pergunta, perguntas in banco_de_perguntas[nivel_dificuldade][categorias_disponiveis[categoria_escolhida]].items():
+        for pergunta, (resposta, pista) in perguntas.items():
+            perguntas_selecionadas.append((pergunta, resposta, pista))
+
+    random.shuffle(perguntas_selecionadas)  # Embaralha as perguntas
+
+    for pergunta, resposta, pista in perguntas_selecionadas:
+        print(f"\nPergunta: {pergunta}")
+        print(f"Dica: {pista}")
+
+        for jogador in jogadores:
+            print(f"\nVez de {jogador['nome']}:")
+            if type(resposta) == list:  # Pergunta de múltipla escolha
+                pontuacao = mostrar_pergunta_multipla_escolha(pergunta, resposta[:-1], resposta[-1], pista)
+            else:  # Pergunta aberta
+                pontuacao = mostrar_pergunta(pergunta, resposta, pista)
+            jogador['pontuacao'] += pontuacao
+
+    print("\nResultados finais:")
+    for jogador in jogadores:
+        print(f"{jogador['nome']}: {jogador['pontuacao']} pontos")
+
+
+
+
+4. Perguntas aleatórias:
+Embaralha as perguntas antes de apresentá-las ao jogador.
+
+perguntas_selecionadas = []
+
+for categoria, tipos in banco_de_perguntas[nivel_dificuldade].items():
+    for tipo, perguntas in tipos.items():
+        for pergunta, (resposta, pista) in perguntas.items():
+            perguntas_selecionadas.append((pergunta, resposta, pista))
+
+random.shuffle(perguntas_selecionadas)  # Embaralha as perguntas
+
+
+
+
+5. Sistema de pontuação mais complexo:
+Atribui pontos com base na rapidez da resposta e na precisão. É implementado na função mostrar_pergunta e mostrar_pergunta_multipla_escolha.
+
+if palpite == resposta.lower():
+    pontuacao = 1  # Pontuação base
+    if tempo_resposta < 20:  # Alteração do tempo limite para 20 segundos
+        pontuacao += 2
+        print(f"Resposta correta! Você ganhou 2 pontos extras por ser rápido.")
+    else:  # Se demorar mais de 20 segundos, ganha apenas 1 ponto extra
+        pontuacao += 1
+        print("Resposta correta!")
+else:
+    pontuacao = -1  # Pontuação base
+    print(f"Incorreto! A resposta correta é '{resposta}'.")
+
+
+
+6. Modo de estudo:
+O modo de estudo permite que o jogador revise as perguntas e respostas sem competir por pontos. Isso é implementado na função modo_estudo, onde todas as perguntas e respostas são apresentadas ao jogador.
+
+# Função para o modo de estudo
+def modo_estudo():
+    print("Bem-vindo ao modo de estudo!")
+    print("Aqui estão as perguntas e respostas por níveis de dificuldade e categorias:\n")
+    for nivel, perguntas_nivel in banco_de_perguntas.items():
+        print(f"Nível de dificuldade: {nivel.capitalize()}\n")
+        for categoria, perguntas_categoria in perguntas_nivel.items():
+            print(f"Categoria: {categoria.capitalize()}\n")
+            for tipo_pergunta, perguntas in perguntas_categoria.items():
+                print(f"Tipo de Pergunta: {tipo_pergunta.capitalize()}\n")
+                for pergunta, (resposta, _) in perguntas.items():
+                    if type(resposta) == list:
+                        print(f"Pergunta: {pergunta}")
+                        print(f"Opções: {', '.join(resposta[:-1])}")
+                        print(f"Resposta: {resposta[-1]}\n")
+                    else:
+                        print(f"Pergunta: {pergunta}")
+                        resposta_usuario = input("Sua resposta: ").strip().lower()
+                        if resposta_usuario == resposta.lower():
+                            print("Resposta correta!")
+                        else:
+                            print(f"Incorreto! A resposta correta é '{resposta}'.\n")
+
+
+
+
+7. Perguntas com várias escolhas:
+Existem perguntas de múltipla escolha implementadas no banco de dados. A função mostrar_pergunta_multipla_escolha lida com essas perguntas.
+
+print(pergunta)
+for opcao in opcoes:
+    print(opcao)
+print(f"Dica: {pista}")
+
+
+
+
+8. Níveis de dificuldade:
+As perguntas estão organizadas em diferentes níveis de dificuldade (fácil, médio, difícil) no banco de dados. No modo single player, o jogador pode escolher o nível de dificuldade.
+
+nivel_dificuldade = input("Escolha o nível de dificuldade: (facil / medio / dificil): ").strip().lower()
+
+
+
+
+9. Personalização de categorias:
+O jogador pode escolher entre diferentes categorias de perguntas (por exemplo, entretenimento, biologia) antes de começar o jogo. Isso é implementado no modo single player, onde o jogador é solicitado a escolher uma categoria.
+
+print("\nEscolha a categoria:")
+categorias_disponiveis = list(banco_de_perguntas[nivel_dificuldade].keys())
+for i, categoria in enumerate(categorias_disponiveis, start=1):
+    print(f"{i}. {categoria.capitalize()}")
+
+categoria_escolhida = int(input("Opção: ")) - 1
+
+
+
+
+
+10. Mecanismo de aprendizado adaptativo (Modo de jogo dinâmico):
+No início do jogo, o jogador enfrenta perguntas de dificuldade fácil. Se o jogador acertar todas as perguntas do nível fácil, avançará para o nível médio. Acertando todas as perguntas do nível médio, avançará para o nível difícil. Se o jogador errar alguma pergunta em qualquer nível de dificuldade, o jogo terminará e a pontuação final será exibida.
+
+def modo_jogo_dinamico():
+    # Mensagens de boas-vindas e instruções para o jogador
+    nivel_dificuldade = "facil"  # Começa com o nível de dificuldade fácil
+    pontuacao_total = 0  # Inicializa a pontuação total
+
+    while nivel_dificuldade in banco_de_perguntas.keys():
+        # Seleciona perguntas com base no nível de dificuldade atual
+        for pergunta, resposta, pista in perguntas_selecionadas:
+            # Apresenta a pergunta ao jogador e processa a resposta
+            # Avança para o próximo nível de dificuldade se todas as perguntas forem respondidas corretamente
+            # Termina o jogo se o jogador errar alguma pergunta
+            ...
+
+    # Exibe a pontuação final do jogador
