@@ -1,47 +1,54 @@
 1. Validação de Entrada do Usuário:
-
-A validação é feita para garantir que o usuário insira apenas números válidos. Se a entrada não for um número ou estiver fora do intervalo permitido, o usuário é avisado.
-
+A função validarPalpite verifica se a entrada do usuário é um número válido dentro do intervalo permitido. Ela percorre cada caractere da entrada para garantir que todos sejam dígitos ou um caractere de nova linha.
 
 int validarPalpite(char *entrada, Intervalo intervalo) {
+    for (int i = 0; entrada[i] != '\0'; i++) {
+        if (!isdigit(entrada[i]) && entrada[i] != '\n') {
+            printf("Por favor, insira um número válido.\n");
+            return 0;
+        }
+    }
     int palpite = atoi(entrada);
     if (palpite < intervalo.min || palpite > intervalo.max) {
         printf("Por favor, insira um número dentro do intervalo fornecido.\n");
-        return 0; // Palpite inválido
+        return 0;
     }
-    return 1; // Palpite válido
+    return 1;
 }
 
 
-2. Limite de Tentativas:
-
-O jogador tem um número máximo de tentativas para adivinhar o número secreto. Se o limite for excedido, o jogo termina.
+2. Limite de Tentativas
+O número máximo de tentativas é definido no struct Intervalo. A contagem de tentativas é incrementada em cada tentativa e comparada com intervalo.max_tentativas.
 
 while (tentativas < intervalo.max_tentativas) {
-    // código para entrada e verificação de palpites
+    printf("Tentativa %d de %d. Adivinhe o número secreto (entre %d e %d): ", tentativas + 1, intervalo.max_tentativas, intervalo.min, intervalo.max);
+    // ... código de leitura e validação ...
     tentativas++;
 }
+
 if (tentativas == intervalo.max_tentativas) {
     printf("Você excedeu o limite de tentativas. O número secreto era %d.\n", numeroSecreto);
 }
 
 
+3. Modularização do Código
+O código é dividido em funções modulares como obterIntervaloDificuldade, gerarNumeroSecreto, validarPalpite, imprimirMensagem, exibirInstrucoes e jogarJogo.
 
-3. Modularização do Código:
+Intervalo obterIntervaloDificuldade(int nivel) {
+    codigo da implementação...
+}
 
-O código é dividido em funções para melhorar a legibilidade e manutenção, como gerarNumeroSecreto, validarPalpite, imprimirMensagem, e exibirInstrucoes.
+int gerarNumeroSecreto(int min, int max, int ultimoNumero) {
+    codigo da implementação...
+}
 
-Intervalo obterIntervaloDificuldade(int nivel);
-int gerarNumeroSecreto(int min, int max);
-int validarPalpite(char *entrada, Intervalo intervalo);
-void imprimirMensagem(char *mensagem);
-void exibirInstrucoes();
+int validarPalpite(char *entrada, Intervalo intervalo) {
+    codigo da implementação...
+}
 
 
-
-4. Utilização de Enumerações:
-
-Uso de enumerações para representar os diferentes estados do jogo: JOGANDO, GANHOU, PERDEU.
+4. Utilização de Enumerações
+A enumeração EstadoJogo é usada para representar os diferentes estados do jogo (JOGANDO, GANHOU, PERDEU).
 
 typedef enum {
     JOGANDO,
@@ -50,10 +57,8 @@ typedef enum {
 } EstadoJogo;
 
 
-
-5. Implementação de Pontuação:
-
-A pontuação é atribuída com base no número de tentativas necessárias para adivinhar o número secreto. Menos tentativas resultam em maior pontuação.
+5. Implementação de Pontuação
+A pontuação é calculada com base no número de tentativas usadas. Quanto menos tentativas, maior a pontuação.
 
 if (palpite == numeroSecreto) {
     int pontuacao = PONTUACAO_MAXIMA / (tentativas + 1);
@@ -62,10 +67,8 @@ if (palpite == numeroSecreto) {
 }
 
 
-
-6. Resolução de Problemas de Repetição de Números Aleatórios:
-
-Garantir que o número secreto seja diferente do anterior pode ser feito armazenando o último número secreto e verificando antes de gerar um novo.
+6. Resolução de Problemas de Repetição de Números Aleatórios
+A função gerarNumeroSecreto evita gerar o mesmo número secreto em jogadas subsequentes.
 
 int gerarNumeroSecreto(int min, int max, int ultimoNumero) {
     int novoNumero;
@@ -76,10 +79,8 @@ int gerarNumeroSecreto(int min, int max, int ultimoNumero) {
 }
 
 
-
-7. Adição de Níveis de Dificuldade:
-
-Diferentes níveis de dificuldade ajustam o intervalo do número secreto e o número máximo de tentativas.
+7. Adição de Níveis de Dificuldade
+A função obterIntervaloDificuldade define diferentes intervalos e limites de tentativas com base no nível de dificuldade escolhido pelo usuário.
 
 Intervalo obterIntervaloDificuldade(int nivel) {
     Intervalo intervalo;
@@ -109,10 +110,14 @@ Intervalo obterIntervaloDificuldade(int nivel) {
 }
 
 
+8. Tratamento de Erros de Entrada/Saída
+A entrada do usuário é tratada com cuidado, incluindo verificações após a leitura com scanf e fgets.
 
-8. Tratamento de Erros de Entrada/Saída:
-
-Implementação para lidar com erros de entrada e saída de dados, garantindo que o programa não quebre inesperadamente.
+if (scanf("%d", &nivel) != 1) {
+    printf("Erro de entrada. Certifique-se de digitar um número.\n");
+    return PERDEU;
+}
+getchar();  // Limpar o buffer de entrada
 
 if (fgets(entrada, sizeof(entrada), stdin) == NULL) {
     printf("Erro de entrada. Não foi possível ler a entrada.\n");
@@ -120,60 +125,49 @@ if (fgets(entrada, sizeof(entrada), stdin) == NULL) {
 }
 
 
-
-9. Implementação de um Menu Interativo:
-
+9. Implementação de um Menu Interativo
 Um menu interativo permite ao jogador escolher entre iniciar um novo jogo, ver as instruções ou sair do jogo.
 
-int main() {
-    int opcao;
-    EstadoJogo estado;
+do {
+    printf("\n=== Menu ===\n");
+    printf("1. Iniciar Novo Jogo\n");
+    printf("2. Ver Instruções\n");
+    printf("3. Sair\n");
+    printf("Escolha uma opção: ");
+
+    if (scanf("%d", &opcao) != 1) {
+        printf("Erro de entrada. Certifique-se de digitar um número.\n");
+        return 1;
+    }
+    getchar();  // Limpar o buffer de entrada
+
+    switch (opcao) {
+        case 1:
+            estado = jogarJogo();
+            if (estado == PERDEU) {
+                printf("Você perdeu! Tente novamente.\n");
+            }
+            break;
+        case 2:
+            exibirInstrucoes();
+            break;
+        case 3:
+            printf("Saindo do jogo...\n");
+            break;
+        default:
+            printf("Opção inválida. Por favor, escolha uma opção válida.\n");
+            break;
+    }
+} while (opcao != 3);
+
+
+10. Otimização de Desempenho
+Foi feita reutilização de código e modularização, o gerenciamento de memória de forma eficiente usando variaveis locais e evitando a repetição de números aleatórios
+
+int gerarNumeroSecreto(int min, int max, int ultimoNumero) {
+    int novoNumero;
     do {
-        printf("\n=== Menu ===\n");
-        printf("1. Iniciar Novo Jogo\n");
-        printf("2. Ver Instruções\n");
-        printf("3. Sair\n");
-        printf("Escolha uma opção: ");
-        if (scanf("%d", &opcao) != 1) {
-            printf("Erro de entrada. Certifique-se de digitar um número.\n");
-            return 1;
-        }
-        getchar();
-        switch (opcao) {
-            case 1:
-                estado = jogarJogo();
-                if (estado == PERDEU) {
-                    printf("Você perdeu! Tente novamente.\n");
-                }
-                break;
-            case 2:
-                exibirInstrucoes();
-                break;
-            case 3:
-                printf("Saindo do jogo...\n");
-                break;
-            default:
-                printf("Opção inválida. Por favor, escolha uma opção válida.\n");
-                break;
-        }
-    } while (opcao != 3);
-    return 0;
+        novoNumero = rand() % (max - min + 1) + min;
+    } while (novoNumero == ultimoNumero);
+    return novoNumero;
 }
-
-
-
-10. Otimização de Desempenho:
-
-Identificação de áreas para otimização como evitar cálculos repetitivos ou minimizar o uso de memória. O uso de funções modulares e variáveis locais ajuda na otimização.
-
-- Modularização do Código:
-O código é dividido em funções claras e concisas para melhorar a legibilidade e a manutenção.
-
-- Evitar Repetição de Números Aleatórios:
-A função gerarNumeroSecreto foi modificada para evitar que o mesmo número secreto seja gerado em jogadas subsequentes.
-
-- Uso Eficiente da Memória:
-Variáveis locais são usadas dentro das funções para garantir que a memória seja liberada quando não for mais necessária.
-
-- Simplificação de Condicionais:
-Condicionais simples e claras são usadas dentro do loop de tentativas para garantir que a lógica seja executada de maneira eficiente.
