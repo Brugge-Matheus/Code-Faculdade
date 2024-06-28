@@ -1,377 +1,286 @@
+import pygame
 import random
-import threading
 import time
 
-# Banco de dados de perguntas por níveis de dificuldade e categorias
-banco_de_perguntas = {
-    "facil": {
-        "entretenimento": {
-            "abertas": {
-                "Quanto é 2 + 2?": ("4", "Adição simples..."),
-                "Quem foi o primeiro presidente do Brasil?": ("Deodoro da Fonseca", "Deodoro..."),
-            },
-            "multipla_escolha": {
-                "Qual é a capital da França?": (["a) Paris", "b) Roma", "c) Londres", "a"], "Cidade do amor..."),
-                "Qual é o maior oceano do mundo?": (["a) Atlântico", "b) Índico", "c) Pacífico", "c"], "Maior oceano..."),
-            },
-        },
-        "biologia": {
-            "abertas": {
-                "Qual é a raiz quadrada de 144?": ("12", "Número..."),
-                "Qual é a fórmula química da água?": ("H2O", "Duas letras..."),
-            },
-            "multipla_escolha": {
-                "Quem descobriu a penicilina?": (["a) Alexander Fleming", "b) Albert Einstein", "c) Isaac Newton", "a"], "Iniciou a era dos antibióticos..."),
-                "Quem foi o primeiro astronauta a pisar na Lua?": (["a) Buzz Aldrin", "b) Neil Armstrong", "c) Yuri Gagarin", "b"], "Passo gigante..."),
-            },
-        },
+# Inicialização do Pygame
+pygame.init()
+
+# Configurações da tela
+largura, altura = 800, 600
+tela = pygame.display.set_mode((largura, altura))
+pygame.display.set_caption("Jogo de Perguntas e Respostas")
+
+# Cores
+branco = (255, 255, 255)
+preto = (0, 0, 0)
+verde = (0, 255, 0)
+vermelho = (255, 0, 0)
+
+# Fontes
+fonte_menu = pygame.font.Font(None, 48)
+fonte_pergunta = pygame.font.Font(None, 36)
+fonte_resposta = pygame.font.Font(None, 32)
+fonte_tempo = pygame.font.Font(None, 24)
+fonte_mensagem = pygame.font.Font(None, 28)
+fonte_dica = pygame.font.Font(None, 28)
+fonte_opcao = pygame.font.Font(None, 32)
+
+# Perguntas e respostas divididas por categoria
+perguntas_por_categoria = {
+    "Geral": {
+        "Qual é a capital do Brasil?": "Brasília",
+        "Quem escreveu 'Dom Quixote'?": "Miguel de Cervantes",
+        "Quantos planetas fazem parte do nosso sistema solar?": "Oito",
+        "Qual é o maior oceano do mundo?": "Oceano Pacífico",
+        "Quem é considerado o pai da filosofia ocidental?": "Sócrates",
+        "Quem foi o inventor da lâmpada elétrica?": "Thomas Edison"
     },
-    "medio": {
-        "entretenimento": {
-            "abertas": {
-                "Quem escreveu 'Dom Quixote'?": ("Miguel de Cervantes", "Miguel..."),
-                "Quem pintou a Mona Lisa?": ("Leonardo da Vinci", "Leonardo..."),
-            },
-            "multipla_escolha": {
-                "Quantos planetas fazem parte do nosso sistema solar?": (["a) Sete", "b) Nove", "c) Oito", "c"], "Menos de dez"),
-                "Qual é o maior animal terrestre?": (["a) Baleia Azul", "b) Elefante Africano", "c) Girafa", "b"], "O maior mamífero..."),
-            },
-        },
-        "biologia": {
-            "abertas": {
-                "Qual é o órgão responsável pela produção de insulina no corpo humano?": ("Pâncreas", "Pâncreas..."),
-                "Quantas câmaras possui o coração humano?": ("Quatro", "Quatro..."),
-            },
-            "multipla_escolha": {
-                "Qual destes animais não é um mamífero?": (["a) Golfinho", "b) Tubarão", "c) Elefante", "b"], "Peixe cartilaginoso..."),
-                "Qual destes é considerado o menor osso do corpo humano?": (["a) Estribo", "b) Fêmur", "c) Úmero", "a"], "Ossículo..."),
-            },
-        },
+    "História": {
+        "Quem foi o primeiro presidente dos Estados Unidos?": "George Washington",
+        "Quem foi o líder da Revolução Russa de 1917?": "Vladimir Lenin",
+        "Qual país construiu a Muralha da China?": "China",
+        "Quem foi o imperador romano que incendiou Roma?": "Nero",
+        "Qual é o nome da primeira astronauta mulher a viajar para o espaço?": "Valentina Tereshkova",
+        "Quem foi o líder militar francês durante a Segunda Guerra Mundial?": "Charles de Gaulle"
     },
-    "dificil": {
-        "entretenimento": {
-            "abertas": {
-                "Quem é o criador da série de livros 'Harry Potter'?": ("J.K. Rowling", "J.K. Rowling..."),
-                "Qual é o nome do primeiro filme da saga 'Star Wars'?": ("Star Wars: Episódio IV - Uma Nova Esperança", "Episódio IV..."),
-            },
-            "multipla_escolha": {
-                "Qual é o sobrenome da família protagonista da série 'Os Simpsons'?": (["a) Simpson", "b) Smith", "c) Cooper", "a"], "A família..."),
-                "Quem interpretou o personagem Jack em 'Titanic'?": (["a) Leonardo DiCaprio", "b) Tom Cruise", "c) Brad Pitt", "a"], "Rei do mundo..."),
-            },
-        },
-        "biologia": {
-            "abertas": {
-                "Qual é a função das mitocôndrias dentro da célula?": ("Produção de energia", "Produção de ATP..."),
-                "Qual é o nome do processo de divisão celular onde uma célula se divide em duas células filhas idênticas?": ("Mitose", "Mitose..."),
-            },
-            "multipla_escolha": {
-                "Quantos cromossomos possui um ser humano normal?": (["a) 46", "b) 23", "c) 48", "a"], "Número..."),
-                "Qual é o nome do processo de formação de gametas?": (["a) Mitose", "b) Meiose", "c) Clivagem", "b"], "Divisão reducional..."),
-            },
-        },
-    },
+    "Ciência": {
+        "Quem descobriu a penicilina?": "Alexander Fleming",
+        "Qual é o maior órgão do corpo humano?": "Pele",
+        "Qual é o elemento mais abundante na crosta terrestre?": "Oxigênio",
+        "Qual é a unidade básica de estrutura e função em um organismo?": "Célula",
+        "Quem propôs a teoria da relatividade?": "Albert Einstein",
+        "Qual é a velocidade da luz no vácuo?": "Aproximadamente 299,792,458 metros por segundo"
+    }
 }
 
-# Função para mostrar uma pergunta com o opção de usar uma pista
-def mostrar_pergunta(pergunta, resposta, pista):
-    print(pergunta)
-    print(f"Dica: {pista}")
-    inicio = time.time()  # Captura o tempo de início
-    palpite = input("Sua resposta: ").strip().lower()
-    fim = time.time()  # Captura o tempo de fim
-    tempo_resposta = round(fim - inicio, 2)  # Calcula o tempo de resposta e arredonda para 2 casas decimais
+# Banco de dados de perguntas e respostas
+banco_de_perguntas = {
+    "Qual é a capital da França?": "Paris",
+    "Quem pintou 'A Noite Estrelada'?": "Vincent van Gogh",
+    "Qual é a maior lua de Saturno?": "Titã",
+    "Quem é o autor de '1984'?": "George Orwell",
+    "Quem é o criador da escultura 'O Pensador'?": "Auguste Rodin",
+    "Qual é a cidade mais populosa do mundo?": "Tóquio"
+}
 
-    if palpite == resposta.lower():
-        pontuacao = 1  # Pontuação base
-        if tempo_resposta < 20:  # Alteração do tempo limite para 20 segundos
-            pontuacao += 2
-            print(f"Resposta correta! Você ganhou 2 pontos extras por ser rápido.")
-        else:  # Se demorar mais de 20 segundos, ganha apenas 1 ponto extra
-            pontuacao += 1
-            print("Resposta correta!")
-    else:
-        pontuacao = -1  # Pontuação base
-        print(f"Incorreto! A resposta correta é '{resposta}'.")
+# Temporizador
+tempo_limite = 15  # 15 segundos para responder
 
-    return pontuacao
+# Modo de jogo (0 - Menu, 1 - Singleplayer, 2 - Multiplayer, 3 - Estudo)
+modo_jogo = 0
 
-# Função para mostrar uma pergunta de múltipla escolha com o opção de usar uma pista
-def mostrar_pergunta_multipla_escolha(pergunta, opcoes, resposta, pista):
-    print(pergunta)
-    for opcao in opcoes:
-        print(opcao)
-    print(f"Dica: {pista}")
-    inicio = time.time()  # Captura o tempo de início
-    palpite = input("Sua resposta: ").strip().lower()
-    fim = time.time()  # Captura o tempo de fim
-    tempo_resposta = round(fim - inicio, 2)  # Calcula o tempo de resposta e arredonda para 2 casas decimais
+# Variáveis do jogo
+pontuacao_por_categoria = {
+    "Geral": 0,
+    "História": 0,
+    "Ciência": 0
+}
+tempo_inicio = 0
 
-    if palpite == resposta.lower():
-        pontuacao = 1  # Pontuação base
-        if tempo_resposta < 20:  # Alteração do tempo limite para 20 segundos
-            pontuacao += 2
-            print(f"Resposta correta! Você ganhou 2 pontos extras por ser rápido.")
-        else:  # Se demorar mais de 20 segundos, ganha apenas 1 ponto extra
-            pontuacao += 1
-            print("Resposta correta!")
-    else:
-        pontuacao = -1  # Pontuação base
-        print(f"Incorreto! A resposta correta é '{resposta}'.")
+# Estado da mensagem de dica
+mostrando_mensagem_dica = False
 
-    return pontuacao
+# Função para mostrar menu inicial
+def mostrar_menu():
+    tela.fill(branco)
+    mostrar_mensagem("Jogo de Perguntas e Respostas", preto, 180)
+    mostrar_mensagem("Pressione '1' para Singleplayer", preto, 260)
+    mostrar_mensagem("Pressione '2' para Multiplayer", preto, 320)
+    mostrar_mensagem("Pressione '3' para Modo de Estudo", preto, 380)
+    pygame.display.flip()
 
+# Função para mostrar mensagem na tela
+def mostrar_mensagem(texto, cor, y):
+    mensagem = fonte_mensagem.render(texto, True, cor)
+    tela.blit(mensagem, ((largura - mensagem.get_width()) // 2, y))
 
-# Função para mostrar uma pergunta de múltipla escolha com a opção de usar uma pista
-def mostrar_pergunta_multipla_escolha(pergunta, opcoes, resposta, pista):
-    print(pergunta)
-    for opcao in opcoes:
-        print(opcao)
-    print(f"Dica: {pista}")
-    inicio = time.time()  # Captura o tempo de início
-    palpite = input("Sua resposta: ").strip().lower()
-    fim = time.time()  # Captura o tempo de fim
-    tempo_resposta = round(fim - inicio, 2)  # Calcula o tempo de resposta e arredonda para 2 casas decimais
+# Função para mostrar pergunta na tela
+def mostrar_pergunta(pergunta):
+    texto_pergunta = fonte_pergunta.render(pergunta, True, preto)
+    tela.blit(texto_pergunta, (20, 50))
 
-    if palpite == resposta.lower():
-        pontuacao = 1  # Pontuação base
-        if tempo_resposta < 5:  # Se responder em menos de 5 segundos, ganha 2 pontos extras
-            pontuacao += 2
-            print(f"Resposta correta! Você ganhou 2 pontos extras por ser rápido.")
-        else:  # Se demorar mais de 5 segundos, ganha apenas 1 ponto extra
-            pontuacao += 1
-            print("Resposta correta!")
-    else:
-        pontuacao = -1  # Pontuação base
-        print(f"Incorreto! A resposta correta é '{resposta}'.")
+# Função para mostrar resposta na tela
+def mostrar_resposta(resposta, y):
+    texto_resposta = fonte_resposta.render(resposta, True, preto)
+    tela.blit(texto_resposta, (20, y))
 
-    return pontuacao
+# Função para mostrar temporizador na tela
+def mostrar_temporizador(tempo_restante):
+    global mostrando_mensagem_dica
+    texto_tempo = fonte_tempo.render(f"Tempo restante: {int(tempo_restante)}", True, preto)
+    tela.blit(texto_tempo, (20, altura - 50))
 
-# Função para definir o temporizador
-def temporizador():
-    print("\nTempo esgotado!")
+    # Mostra a mensagem de dica sempre
+    mostrar_mensagem("Pressione ',' para obter uma dica!", preto, altura - 80)
 
-# Função para o novo modo de jogo dinâmico
-def modo_jogo_dinamico():
-    print("Bem-vindo ao novo modo de jogo dinâmico!\n")
-    print("Este modo de jogo começa com perguntas de dificuldade fácil.")
-    print("Se você acertar todas as perguntas, avançará para a dificuldade média.")
-    print("Acertando todas as perguntas de médio, avançará para a dificuldade difícil.")
-    print("Se errar alguma pergunta, o jogo terminará e sua pontuação será exibida.\n")
+# Função para mostrar pontuação na tela
+def mostrar_pontuacao():
+    y = 20
+    for categoria, pontuacao in pontuacao_por_categoria.items():
+        texto_pontuacao = fonte_tempo.render(f"{categoria}: {pontuacao} pontos", True, preto)
+        tela.blit(texto_pontuacao, (20, y))
+        y += 30
 
-    nivel_dificuldade = "facil"  # Começa com o nível de dificuldade fácil
-    pontuacao_total = 0  # Inicializa a pontuação total
+# Função para mostrar dica na tela
+def mostrar_dica(dica):
+    if dica:
+        texto_dica = fonte_dica.render(dica, True, preto)
+        tela.blit(texto_dica, (20, 200))  # Ajuste na posição vertical
 
-    while nivel_dificuldade in banco_de_perguntas.keys():
-        print(f"Perguntas do nível de dificuldade: {nivel_dificuldade.capitalize()}\n")
-        perguntas_selecionadas = []
+# Função para selecionar uma pergunta aleatória de uma categoria específica
+def selecionar_pergunta(categoria):
+    if categoria in perguntas_por_categoria:
+        perguntas = list(perguntas_por_categoria[categoria].items())
+        return random.choice(perguntas)
+    return None, None
 
-        for categoria, tipos in banco_de_perguntas[nivel_dificuldade].items():
-            for tipo, perguntas in tipos.items():
-                for pergunta, (resposta, pista) in perguntas.items():
-                    perguntas_selecionadas.append((pergunta, resposta, pista))
+# Função para selecionar uma pergunta aleatória do banco de perguntas geral
+def selecionar_pergunta_geral():
+    return random.choice(list(banco_de_perguntas.items()))
 
-        random.shuffle(perguntas_selecionadas)  # Embaralha as perguntas
+# Função principal do jogo - Singleplayer
+def jogo_singleplayer():
+    global tempo_inicio, mostrando_mensagem_dica
 
-        todas_corretas = True
-        for pergunta, resposta, pista in perguntas_selecionadas:
-            if type(resposta) == list:  # Pergunta de múltipla escolha
-                print("\nVocê tem 20 segundos para responder a esta pergunta:")
-                temporizador_thread = threading.Timer(20, temporizador)
-                temporizador_thread.start()
+    rodando = True
+    while rodando:
+        tela.fill(branco)
 
-                pontuacao = mostrar_pergunta_multipla_escolha(pergunta, resposta[:-1], resposta[-1], pista)
-                pontuacao_total += pontuacao
-                print(f"Você ganhou {pontuacao} pontos nesta pergunta.\n")  
+        categoria = escolher_categoria()
+        perguntas_respondidas = set()  # Conjunto para controlar perguntas já feitas
+        mostrando_mensagem_dica = False  # Reinicia o estado da mensagem de dica
+        while len(perguntas_respondidas) < len(perguntas_por_categoria[categoria]):
+            pergunta, resposta = selecionar_pergunta(categoria)
+            if pergunta not in perguntas_respondidas:
+                perguntas_respondidas.add(pergunta)
 
-                temporizador_thread.cancel()
-            else:  # Pergunta aberta
-                print("\nVocê tem 20 segundos para responder a esta pergunta:")
-                temporizador_thread = threading.Timer(20, temporizador)
-                temporizador_thread.start()
+                mostrar_pergunta(pergunta)
+                mostrar_temporizador(tempo_limite)
 
-                pontuacao = mostrar_pergunta(pergunta, resposta, pista)
-                pontuacao_total += pontuacao
-                print(f"Você ganhou {pontuacao} pontos nesta pergunta.\n")  
+                pygame.display.flip()
 
-                temporizador_thread.cancel()
+                # Inicializar temporizador
+                tempo_inicio = time.time()
+                tempo_restante = tempo_limite
 
-            if pontuacao == -1:  # Se o jogador errar, o jogo termina
-                todas_corretas = False
-                break
+                respondido = False
+                dica_usada = False
+                palpite = ""
+                dica = ""  # Inicializa a variável dica aqui
 
-        if todas_corretas:
-            if nivel_dificuldade == "facil":
-                nivel_dificuldade = "medio"
-                print("Parabéns! Você acertou todas as perguntas do nível fácil.\n"
-                      "Avançando para o nível médio...\n")
-            elif nivel_dificuldade == "medio":
-                nivel_dificuldade = "dificil"
-                print("Parabéns! Você acertou todas as perguntas do nível médio.\n"
-                      "Avançando para o nível difícil...\n")
-            else:
-                print("Parabéns! Você acertou todas as perguntas do nível difícil.\n"
-                      "Fim do jogo.")
-                break
-        else:
-            print("Fim do jogo.")
-            break
+                while tempo_restante > 0 and not respondido:
+                    for evento in pygame.event.get():
+                        if evento.type == pygame.QUIT:
+                            rodando = False  # Encerra o loop principal
+                        if evento.type == pygame.KEYDOWN:
+                            if evento.key == pygame.K_RETURN:
+                                if palpite.lower() == resposta.lower():
+                                    mostrar_resposta("Resposta correta!", 170)
+                                    pygame.display.flip()
+                                    pygame.time.wait(1000)  # Aguardar um pouco para ver a resposta
+                                else:
+                                    mostrar_resposta(f"Resposta incorreta! A resposta correta é: {resposta}", 170)
+                                    pygame.display.flip()
+                                    pygame.time.wait(1000)  # Aguardar um pouco para ver a resposta
+                                respondido = True
+                            elif evento.key == pygame.K_BACKSPACE:
+                                palpite = palpite[:-1]
+                            elif evento.key == pygame.K_COMMA:  # Pressione ',' para uma dica
+                                if not dica_usada:
+                                    dica = resposta[0] + '_' * (len(resposta) - 1)  # Exibir a primeira letra da resposta
+                                    dica_usada = True
+                                    mostrando_mensagem_dica = True
+                            else:
+                                palpite += evento.unicode
 
-    print(f"\nSua pontuação final é: {pontuacao_total} pontos.")
+                    tela.fill(branco)
+                    mostrar_pergunta(pergunta)
+                    mostrar_temporizador(tempo_restante)
+                    mostrar_resposta(palpite, 120)
+                    mostrar_dica(dica)
 
-# Função para o modo single player
-def modo_singleplayer():
-    print("Bem-vindo ao modo single player!")
-    nivel_dificuldade = input("Escolha o nível de dificuldade: (facil / medio / dificil): ").strip().lower()
+                    pygame.display.flip()
 
-    if nivel_dificuldade not in banco_de_perguntas.keys():
-        print("Nível de dificuldade inválido. Por favor, escolha entre 'facil', 'medio' ou 'dificil'.")
-        return
+                    tempo_atual = time.time()
+                    tempo_restante = tempo_limite - (tempo_atual - tempo_inicio)
 
-    print("\nEscolha a categoria:")
-    categorias_disponiveis = list(banco_de_perguntas[nivel_dificuldade].keys())
-    for i, categoria in enumerate(categorias_disponiveis, start=1):
-        print(f"{i}. {categoria.capitalize()}")
+                if not respondido:
+                    mostrar_resposta(f"Tempo esgotado! A resposta correta é: {resposta}", 170)
+                    pygame.display.flip()
+                    pygame.time.wait(1000)  # Aguardar um pouco para ver a resposta
 
-    categoria_escolhida = int(input("Opção: ")) - 1
+                pygame.time.wait(2000)  # Aguardar um pouco entre as perguntas
 
-    if categoria_escolhida not in range(len(categorias_disponiveis)):
-        print("Categoria inválida.")
-        return
+        # Exibir pontuação final da categoria
+        tela.fill(branco)
+        mostrar_pontuacao()
+        mostrar_mensagem("Fim do Jogo! Pressione ESC para sair.", preto, 20)
+        pygame.display.flip()
 
-    print("\nVamos começar...\n")
-    perguntas_selecionadas = []
+        # Aguardar evento para sair
+        esperando = True
+        while esperando:
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    rodando = False
+                    esperando = False
+                if evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_ESCAPE:
+                        rodando = False
+                        esperando = False
 
-    for tipo_pergunta, perguntas in banco_de_perguntas[nivel_dificuldade][categorias_disponiveis[categoria_escolhida]].items():
-        for pergunta, (resposta, pista) in perguntas.items():
-            perguntas_selecionadas.append((pergunta, resposta, pista))
+    pygame.quit()  # Encerra o Pygame ao sair do loop principal
 
-    random.shuffle(perguntas_selecionadas)  # Embaralha as perguntas
+# Função para escolher a categoria de perguntas
+def escolher_categoria():
+    tela.fill(branco)
+    mostrar_mensagem("Escolha uma categoria:", preto, 20)
+    
+    categorias = list(perguntas_por_categoria.keys())
+    opcao_y = 100
+    opcao_gap = 50
+    
+    for i, categoria in enumerate(categorias):
+        texto_opcao = fonte_opcao.render(f"{i + 1}. {categoria}", True, preto)
+        tela.blit(texto_opcao, (150, opcao_y))
+        opcao_y += opcao_gap
+    
+    pygame.display.flip()
 
-    pontuacao_total = 0.0  # Altera para ponto flutuante
+    escolhendo = True
+    while escolhendo:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if evento.type == pygame.KEYDOWN:
+                if pygame.K_1 <= evento.key <= pygame.K_3:
+                    indice = evento.key - pygame.K_1
+                    if 0 <= indice < len(categorias):
+                        return categorias[indice]
 
-    for pergunta, resposta, pista in perguntas_selecionadas:
-        if type(resposta) == list:  # Pergunta de múltipla escolha
-            print("\nVocê tem 20 segundos para responder a esta pergunta:")
-            temporizador_thread = threading.Timer(20, temporizador)
-            temporizador_thread.start()
-
-            pontuacao = mostrar_pergunta_multipla_escolha(pergunta, resposta[:-1], resposta[-1], pista)
-            pontuacao_total += pontuacao
-            print(f"Você ganhou {pontuacao:.2f} pontos nesta pergunta.")  
-
-            temporizador_thread.cancel()
-        else:  # Pergunta aberta
-            print("\nVocê tem 20 segundos para responder a esta pergunta:")
-            temporizador_thread = threading.Timer(20, temporizador)
-            temporizador_thread.start()
-
-            pontuacao = mostrar_pergunta(pergunta, resposta, pista)
-            pontuacao_total += pontuacao
-            print(f"Você ganhou {pontuacao:.2f} pontos nesta pergunta.")  
-
-            temporizador_thread.cancel()
-
-    print(f"\nSua pontuação final é: {pontuacao_total:.2f}")  
-
-# Função para o modo multiplayer
-def modo_multiplayer():
-    print("Bem-vindo ao modo multiplayer!")
-    num_jogadores = int(input("Quantos jogadores participarão? "))
-    jogadores = []
-
-    for i in range(num_jogadores):
-        nome = input(f"Digite o nome do jogador {i + 1}: ")
-        jogadores.append({"nome": nome, "pontuacao": 0})
-
-    print("\nVamos começar...\n")
-
-    nivel_dificuldade = input("Escolha o nível de dificuldade: (facil / medio / dificil): ").strip().lower()
-
-    if nivel_dificuldade not in banco_de_perguntas.keys():
-        print("Nível de dificuldade inválido. Por favor, escolha entre 'facil', 'medio' ou 'dificil'.")
-        return
-
-    print("\nEscolha a categoria:")
-    categorias_disponiveis = list(banco_de_perguntas[nivel_dificuldade].keys())
-    for i, categoria in enumerate(categorias_disponiveis, start=1):
-        print(f"{i}. {categoria.capitalize()}")
-
-    categoria_escolhida = int(input("Opção: ")) - 1
-
-    if categoria_escolhida not in range(len(categorias_disponiveis)):
-        print("Categoria inválida.")
-        return
-
-    print("\nVamos começar...\n")
-    perguntas_selecionadas = []
-
-    for tipo_pergunta, perguntas in banco_de_perguntas[nivel_dificuldade][categorias_disponiveis[categoria_escolhida]].items():
-        for pergunta, (resposta, pista) in perguntas.items():
-            perguntas_selecionadas.append((pergunta, resposta, pista))
-
-    random.shuffle(perguntas_selecionadas)  # Embaralha as perguntas
-
-    for pergunta, resposta, pista in perguntas_selecionadas:
-        print(f"\nPergunta: {pergunta}")
-        print(f"Dica: {pista}")
-
-        for jogador in jogadores:
-            print(f"\nVez de {jogador['nome']}:")
-            if type(resposta) == list:  # Pergunta de múltipla escolha
-                pontuacao = mostrar_pergunta_multipla_escolha(pergunta, resposta[:-1], resposta[-1], pista)
-            else:  # Pergunta aberta
-                pontuacao = mostrar_pergunta(pergunta, resposta, pista)
-            jogador['pontuacao'] += pontuacao
-
-    print("\nResultados finais:")
-    for jogador in jogadores:
-        print(f"{jogador['nome']}: {jogador['pontuacao']} pontos")
-
-# Função para o modo de estudo
-def modo_estudo():
-    print("Bem-vindo ao modo de estudo!")
-    print("Aqui estão as perguntas e respostas por níveis de dificuldade e categorias:\n")
-    for nivel, perguntas_nivel in banco_de_perguntas.items():
-        print(f"Nível de dificuldade: {nivel.capitalize()}\n")
-        for categoria, perguntas_categoria in perguntas_nivel.items():
-            print(f"Categoria: {categoria.capitalize()}\n")
-            for tipo_pergunta, perguntas in perguntas_categoria.items():
-                print(f"Tipo de Pergunta: {tipo_pergunta.capitalize()}\n")
-                for pergunta, (resposta, _) in perguntas.items():
-                    if type(resposta) == list:
-                        print(f"Pergunta: {pergunta}")
-                        print(f"Opções: {', '.join(resposta[:-1])}")
-                        print(f"Resposta: {resposta[-1]}\n")
-                    else:
-                        print(f"Pergunta: {pergunta}")
-                        resposta_usuario = input("Sua resposta: ").strip().lower()
-                        if resposta_usuario == resposta.lower():
-                            print("Resposta correta!")
-                        else:
-                            print(f"Incorreto! A resposta correta é '{resposta}'.\n")
-
-# Função principal para o menu inicial
+# Função principal do jogo
 def main():
-    print("Bem-vindo ao Quiz Show!\n")
-    print("Escolha o modo de jogo:")
-    print("1. Single Player")
-    print("2. Multiplayer")
-    print("3. Estudo")
-    print("4. Modo Dinâmico")
+    global modo_jogo
+    
+    rodando = True
+    while rodando:
+        mostrar_menu()
 
-    opcao = input("Opção: ")
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                rodando = False
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_1:
+                    modo_jogo = 1  # Singleplayer
+                    jogo_singleplayer()
+                elif evento.key == pygame.K_2:
+                    modo_jogo = 2  # Multiplayer (ainda não implementado)
+                elif evento.key == pygame.K_3:
+                    modo_jogo = 3  # Modo de Estudo
+                    jogo_singleplayer()
 
-    if opcao == "1":
-        modo_singleplayer()
-    elif opcao == "2":
-        modo_multiplayer()
-    elif opcao == "3":
-        modo_estudo()
-    elif opcao == "4":
-        modo_jogo_dinamico()
-    else:
-        print("Opção inválida. Por favor, escolha uma opção válida.")
+    pygame.quit()  # Encerra o Pygame ao sair do loop principal
 
-# Inicializa o programa
 if __name__ == "__main__":
     main()
